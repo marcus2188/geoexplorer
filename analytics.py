@@ -4,6 +4,8 @@ from typing import List
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
+import folium as fl
+import webbrowser as wb
 
 def removeAllNullValues(somedf: pd.core.frame.DataFrame) -> pd.core.frame.DataFrame:
     """ Drops all rows and columns with null value present in any data row cells """
@@ -48,6 +50,20 @@ def plotPopulationComposition(worldpop_df: pd.core.frame.DataFrame):
     plt.pie(reformed_df["World Population Percentage"].tolist(), labels=reformed_df["Country"].tolist(), colors=sb.color_palette('bright'), autopct='%.0f%%', textprops={'fontsize': 7}, explode=explodelist, rotatelabels=True)
     plt.show()
 
+def plotGeoDensity(worldpop_df: pd.core.frame.DataFrame):
+    """ Visualize the density of each country on a big world map """
+    countrydensityonly = worldpop_df[["Country", "Density"]]
+    url = 'https://raw.githubusercontent.com/python-visualization/folium/master/examples/data'
+    country_shapes = f'{url}/world-countries.json'
+    countrydensityonly.replace('United States', "United States of America", inplace = True) 
+    countrydensityonly.replace("Republic of the Congo", "Democratic Republic of the Congo", inplace = True)
+    countrydensityonly.replace("Serbia", "Republic of Serbia", inplace = True)
+    countrydensityonly.replace("Tanzania", "United Republic of Tanzania", inplace = True)
+    countrydensityonly.drop(countrydensityonly[countrydensityonly["Density"]>800].index, inplace = True)
+    worldmap = fl.Map()
+    fl.Choropleth(geo_data=country_shapes, name="Choropleth Density", data=countrydensityonly, columns=["Country", "Density"], bins=8 , key_on='feature.properties.name', fill_color='YlOrRd', nan_fill_color='black').add_to(worldmap)
+    worldmap.save("diagrams/densityworldmap.html")
+
 if __name__ == '__main__':
     # READ DATA FILES
     worldpop_df = pd.read_csv("datasets/worldpopulation.csv")
@@ -58,7 +74,7 @@ if __name__ == '__main__':
     # plotPopulationComparison(worldpop_nonnull, countrynames)
 
     # PLOT PIECHART OF POPULATION SHARE
-    plotPopulationComposition(worldpop_nonnull)
+    # plotPopulationComposition(worldpop_nonnull)
 
-
-
+    # VISUALIZE COUNTRY DENSITY ON A MAP
+    plotGeoDensity(worldpop_nonnull)
